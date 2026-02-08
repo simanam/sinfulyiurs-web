@@ -25,7 +25,13 @@ function useInView(threshold = 0.15) {
 }
 
 /* ─── Animated counter ─── */
-function AnimatedCounter({ target, duration = 2000 }: { target: number; duration?: number }) {
+function AnimatedCounter({
+  target,
+  duration = 2000,
+}: {
+  target: number;
+  duration?: number;
+}) {
   const [count, setCount] = useState(0);
   const { ref, inView } = useInView();
   useEffect(() => {
@@ -46,7 +52,81 @@ function AnimatedCounter({ target, duration = 2000 }: { target: number; duration
   return <span ref={ref}>{count.toLocaleString()}</span>;
 }
 
-/* ─── Fake routine data ─── */
+/* ─── Typewriter text effect ─── */
+function TypewriterText({ texts, className = "" }: { texts: string[]; className?: string }) {
+  const [index, setIndex] = useState(0);
+  const [displayed, setDisplayed] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const current = texts[index];
+    const speed = isDeleting ? 40 : 70;
+
+    if (!isDeleting && displayed === current) {
+      const pause = setTimeout(() => setIsDeleting(true), 2000);
+      return () => clearTimeout(pause);
+    }
+
+    if (isDeleting && displayed === "") {
+      setIsDeleting(false);
+      setIndex((prev) => (prev + 1) % texts.length);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setDisplayed(
+        isDeleting
+          ? current.substring(0, displayed.length - 1)
+          : current.substring(0, displayed.length + 1)
+      );
+    }, speed);
+    return () => clearTimeout(timer);
+  }, [displayed, isDeleting, index, texts]);
+
+  return (
+    <span className={className}>
+      {displayed}
+      <span className="animate-blink text-gold">|</span>
+    </span>
+  );
+}
+
+/* ─── Live activity ticker item ─── */
+function ActivityTicker() {
+  const activities = [
+    { user: "Maya", action: "logged her PM ritual", detail: "7 steps · Glass Skin Night", time: "2m ago" },
+    { user: "Alex", action: "cloned a routine", detail: "Minimal Morning Glow", time: "4m ago" },
+    { user: "Priya", action: "hit a 60-day streak", detail: "Unlocked Pride sin", time: "7m ago" },
+    { user: "Jordan", action: "shared their routine", detail: "12 products · Obsessed level", time: "9m ago" },
+    { user: "Sana", action: "added a new product", detail: "Drunk Elephant Protini", time: "11m ago" },
+    { user: "Kai", action: "logged their AM ritual", detail: "5 steps · SPF included", time: "14m ago" },
+    { user: "Nina", action: "reached Devoted level", detail: "47-day streak", time: "16m ago" },
+    { user: "Riya", action: "saved 3 routines", detail: "Exploring new PM rituals", time: "18m ago" },
+  ];
+
+  return (
+    <div className="relative overflow-hidden">
+      <div className="animate-ticker flex gap-6">
+        {[...activities, ...activities].map((a, i) => (
+          <div
+            key={i}
+            className="flex shrink-0 items-center gap-3 rounded-full border border-white/[0.06] bg-near-black/80 px-4 py-2"
+          >
+            <div className="h-2 w-2 shrink-0 rounded-full bg-sage animate-pulse" />
+            <p className="whitespace-nowrap text-xs text-warm-cream/50">
+              <span className="font-semibold text-warm-cream/70">{a.user}</span>{" "}
+              {a.action}{" "}
+              <span className="text-gold/60">· {a.detail}</span>
+            </p>
+            <span className="text-[10px] text-warm-cream/20">{a.time}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Routine data ─── */
 const routines = [
   {
     name: "The Glass Skin PM",
@@ -133,13 +213,13 @@ const features = [
 ];
 
 const sins = [
-  { emoji: "🪞", name: "Vanity", desc: "30+ days of progress photos" },
-  { emoji: "🧴", name: "Gluttony", desc: "10+ products in one routine" },
-  { emoji: "💰", name: "Greed", desc: "Routine costs over $15/day" },
-  { emoji: "😍", name: "Lust", desc: "Saved 20+ routines" },
-  { emoji: "👀", name: "Envy", desc: "Cloned 5+ routines" },
-  { emoji: "🔥", name: "Pride", desc: "60-day streak achieved" },
-  { emoji: "😴", name: "Sloth", desc: "Skipped PM 3+ times" },
+  { icon: "mirror", name: "Vanity", desc: "30+ days of progress photos" },
+  { icon: "bottle", name: "Gluttony", desc: "10+ products in one routine" },
+  { icon: "coin", name: "Greed", desc: "Routine costs over $15/day" },
+  { icon: "heart", name: "Lust", desc: "Saved 20+ routines" },
+  { icon: "eye", name: "Envy", desc: "Cloned 5+ routines" },
+  { icon: "flame", name: "Pride", desc: "60-day streak achieved" },
+  { icon: "moon", name: "Sloth", desc: "Skipped PM 3+ times" },
 ];
 
 /* ─── Icon component (inline SVGs) ─── */
@@ -181,6 +261,57 @@ function FeatureIcon({ name }: { name: string }) {
         <line x1="18" y1="20" x2="18" y2="10" />
         <line x1="12" y1="20" x2="12" y2="4" />
         <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+  };
+  return <span className="text-gold">{iconMap[name]}</span>;
+}
+
+/* ─── Sin icon component (inline SVGs) ─── */
+function SinIcon({ name }: { name: string }) {
+  const iconMap: Record<string, React.ReactNode> = {
+    mirror: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="9" r="5" />
+        <line x1="12" y1="14" x2="12" y2="22" />
+        <line x1="9" y1="22" x2="15" y2="22" />
+      </svg>
+    ),
+    bottle: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="7" y="10" width="10" height="12" rx="2" />
+        <path d="M9 10V6h6v4" />
+        <rect x="10" y="3" width="4" height="3" rx="1" />
+        <line x1="10" y1="15" x2="14" y2="15" />
+      </svg>
+    ),
+    coin: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.7 0-3 1-3 2.5s1.3 2 3 2.5c1.7.5 3 1 3 2.5 0 1.5-1.3 2.5-3 2.5-1 0-2-.5-2.5-1.5" />
+        <line x1="12" y1="6" x2="12" y2="8" />
+        <line x1="12" y1="16" x2="12" y2="18" />
+      </svg>
+    ),
+    heart: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+    ),
+    eye: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    ),
+    flame: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22c4-4 8-7.5 8-12 0-3-1.5-5.5-4-7-1 2-2 3-4 3s-3-1-4-3c-2.5 1.5-4 4-4 7 0 4.5 4 8 8 12z" />
+      </svg>
+    ),
+    moon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
       </svg>
     ),
   };
@@ -264,7 +395,7 @@ function PhoneMockup({
           {routine.avatar}
         </div>
         <span className="text-[9px] text-warm-cream/40">
-          {routine.user} · Sin Level:{routine.level}
+          {routine.user} · Sin Level: {routine.level}
         </span>
       </div>
     </div>
@@ -325,8 +456,10 @@ export default function Home() {
   useEffect(() => setIsMounted(true), []);
 
   const heroRef = useInView();
-  const featuresRef = useInView();
+  const problemRef = useInView(0.2);
+  const ritualRef = useInView();
   const routinesRef = useInView();
+  const featuresRef = useInView();
   const socialRef = useInView();
   const sinsRef = useInView();
   const ctaRef = useInView();
@@ -344,7 +477,10 @@ export default function Home() {
       {/* ─── NAV ─── */}
       <nav className="fixed top-0 z-50 w-full border-b border-white/[0.04] bg-obsidian/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
-          <a href="#" className="font-[family-name:var(--font-playfair)] text-xl italic text-warm-cream">
+          <a
+            href="#"
+            className="font-[family-name:var(--font-playfair)] text-xl italic text-warm-cream"
+          >
             sinfuly<span className="text-gold">urs</span>
           </a>
           <a
@@ -356,9 +492,11 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* ─── HERO ─── */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* HERO — Emotional, identity-driven                          */}
+      {/* ═══════════════════════════════════════════════════════════ */}
       <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-5 pt-14">
-        {/* Gradient overlays */}
+        {/* Ambient gradients */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-[20%] top-[15%] h-[500px] w-[500px] rounded-full bg-gold/[0.06] blur-[120px]" />
           <div className="absolute bottom-[20%] right-[15%] h-[400px] w-[400px] rounded-full bg-blush/[0.04] blur-[100px]" />
@@ -368,29 +506,61 @@ export default function Home() {
           ref={heroRef.ref}
           className="relative z-10 mx-auto max-w-3xl text-center"
         >
+          {/* Eyebrow — sets context */}
           <p
             className={`mb-4 text-xs font-medium tracking-[0.3em] uppercase text-gold-muted ${
               isMounted ? "animate-fade-up" : "opacity-0"
             }`}
           >
-            Your beauty routine tracker
+            Where your beauty routine lives
           </p>
+
+          {/* Main headline — emotional, not functional */}
           <h1
             className={`mb-6 font-[family-name:var(--font-playfair)] text-[clamp(2.5rem,8vw,5.5rem)] font-normal leading-[1.05] italic ${
               isMounted ? "animate-fade-up stagger-1" : "opacity-0"
             }`}
           >
-            Your routine.{" "}
-            <span className="text-gold">Sinfully yours.</span>
+            Log it.{" "}
+            <span className="text-gold">Share it.</span>
+            <br />
+            <span className="text-warm-cream/40">Own it.</span>
           </h1>
+
+          {/* Subhead — the hook */}
           <p
-            className={`mx-auto mb-10 max-w-xl text-base font-light leading-relaxed text-warm-cream/50 md:text-lg ${
+            className={`mx-auto mb-5 max-w-xl text-base font-light leading-relaxed text-warm-cream/50 md:text-lg ${
               isMounted ? "animate-fade-up stagger-2" : "opacity-0"
             }`}
           >
-            Track your AM & PM skincare rituals. Discover what actually works.
-            Join a community that takes beauty as seriously as you do.
+            The place where skincare people log their rituals, share what they
+            actually use, and discover routines from real people — not
+            influencers.
           </p>
+
+          {/* Typewriter — shows the social diversity */}
+          <div
+            className={`mb-10 h-8 ${
+              isMounted ? "animate-fade-up stagger-2" : "opacity-0"
+            }`}
+          >
+            <p className="text-sm text-warm-cream/30">
+              Right now, someone is{" "}
+              {isMounted && (
+                <TypewriterText
+                  texts={[
+                    "logging their 7-step PM ritual",
+                    "sharing a retinol routine that actually works",
+                    "cloning a routine they found at 2am",
+                    "hitting a 60-day streak",
+                    "adding a new holy grail product",
+                    "discovering their next obsession",
+                  ]}
+                  className="text-warm-cream/60"
+                />
+              )}
+            </p>
+          </div>
 
           {/* Email signup */}
           <form
@@ -430,19 +600,188 @@ export default function Home() {
               isMounted ? "animate-fade-up stagger-4" : "opacity-0"
             }`}
           >
-            iOS app launching soon. Be the first to know.
+            iOS app launching soon · Free to use · No algorithm, no ads
           </p>
         </div>
 
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-warm-cream/20">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            className="text-warm-cream/20"
+          >
             <path d="M12 5v14M5 12l7 7 7-7" />
           </svg>
         </div>
       </section>
 
-      {/* ─── SOCIAL PROOF BAR ─── */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* LIVE ACTIVITY — FOMO ticker                                */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section className="border-y border-white/[0.04] bg-near-black/50 py-4 overflow-hidden">
+        <ActivityTicker />
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* THE PROBLEM — Emotional pain point                         */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32">
+        <div ref={problemRef.ref} className="mx-auto max-w-3xl px-5">
+          <div
+            className={`text-center ${
+              problemRef.inView ? "animate-fade-up" : "opacity-0"
+            }`}
+          >
+            <p className="mb-8 text-xs font-semibold tracking-[0.3em] uppercase text-warm-cream/20">
+              Sound familiar?
+            </p>
+            <h2 className="mb-8 font-[family-name:var(--font-playfair)] text-[clamp(1.5rem,5vw,3rem)] leading-[1.3] italic text-warm-cream/80">
+              You have a skincare routine you&apos;ve spent{" "}
+              <span className="text-gold">months perfecting</span>. You switch
+              products, try new things, build habits. But{" "}
+              <span className="text-blush">nobody sees it</span>. It lives in
+              your bathroom, in your head, in a Notes app screenshot you sent a
+              friend once.
+            </h2>
+            <div className="mx-auto mb-10 h-px w-16 bg-gold/30" />
+            <p className="mx-auto max-w-lg text-sm leading-relaxed text-warm-cream/35">
+              Meanwhile, everyone on Reddit is asking &quot;what&apos;s your routine?&quot;
+              and you&apos;re writing the same comment for the fifth time. Your
+              shelf is a museum. Where&apos;s the guest book?
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* THE ANSWER — Quick identity statement                      */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section className="border-y border-white/[0.04] bg-dark-warm py-20 md:py-24">
+        <div className="mx-auto max-w-4xl px-5 text-center">
+          <p className="mb-4 text-xs font-semibold tracking-[0.3em] uppercase text-gold">
+            Introducing sinfulyurs
+          </p>
+          <h2 className="mb-6 font-[family-name:var(--font-playfair)] text-[clamp(2rem,5vw,3.5rem)] italic leading-tight">
+            Letterboxd, but for{" "}
+            <span className="text-gold">beauty</span>
+          </h2>
+          <p className="mx-auto max-w-2xl text-base leading-relaxed text-warm-cream/45">
+            Log every step of your AM and PM routines. Share them with a
+            community that gets it. Discover what real people use — not what
+            they&apos;re paid to recommend. Clone routines you love. Build your
+            beauty identity in one place.
+          </p>
+
+          {/* Three pillars */}
+          <div className="mx-auto mt-14 grid max-w-3xl gap-8 md:grid-cols-3">
+            {[
+              {
+                num: "01",
+                title: "Log your ritual",
+                desc: "Every product, every step, AM and PM. Your routine deserves to be documented.",
+              },
+              {
+                num: "02",
+                title: "Share your shelf",
+                desc: "Your products build our database. Every routine shared makes the community smarter.",
+              },
+              {
+                num: "03",
+                title: "Discover what works",
+                desc: "Browse routines from real people. Find your next holy grail. Clone it in one tap.",
+              },
+            ].map((pillar) => (
+              <div key={pillar.num} className="text-left">
+                <p className="mb-2 font-[family-name:var(--font-playfair)] text-3xl italic text-gold/40">
+                  {pillar.num}
+                </p>
+                <h3 className="mb-2 text-sm font-semibold tracking-wide uppercase text-warm-cream">
+                  {pillar.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-warm-cream/35">
+                  {pillar.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* THE RITUAL — Interactive app experience                    */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32">
+        <div ref={ritualRef.ref} className="mx-auto max-w-6xl px-5">
+          <div className="mb-6 text-center">
+            <p className="mb-3 text-xs font-semibold tracking-[0.3em] uppercase text-gold">
+              Inside the app
+            </p>
+            <h2
+              className={`font-[family-name:var(--font-playfair)] text-3xl italic md:text-5xl ${
+                ritualRef.inView ? "animate-fade-up" : "opacity-0"
+              }`}
+            >
+              This is what your{" "}
+              <span className="text-gold">ritual</span> looks like
+            </h2>
+            <p className="mx-auto mt-4 max-w-lg text-sm text-warm-cream/40">
+              Every morning and every night. Check off each step. Watch your
+              streak grow. Feel the satisfaction of a routine{" "}
+              <span className="italic text-warm-cream/60">completed</span>.
+            </p>
+          </div>
+
+          {/* Simulated check-off animation text */}
+          <div
+            className={`mb-12 text-center ${
+              ritualRef.inView ? "animate-fade-up stagger-1" : "opacity-0"
+            }`}
+          >
+            <div className="inline-flex items-center gap-2 rounded-full border border-sage/20 bg-sage/5 px-4 py-2">
+              <div className="h-2 w-2 rounded-full bg-sage animate-pulse" />
+              <span className="text-xs text-sage">
+                Priya just completed her PM ritual — 62 day streak
+              </span>
+            </div>
+          </div>
+
+          {/* Scrollable phone mockups */}
+          <div
+            ref={routinesRef.ref}
+            className="scrollbar-hide -mx-5 flex gap-8 overflow-x-auto px-5 pb-4 md:justify-center md:overflow-x-visible"
+          >
+            {routines.map((r, i) => (
+              <PhoneMockup
+                key={i}
+                routine={r}
+                className={`${
+                  routinesRef.inView
+                    ? `animate-fade-up stagger-${i + 2}`
+                    : "opacity-0"
+                } ${i === 1 ? "animate-float" : ""}`}
+              />
+            ))}
+          </div>
+
+          {/* Beneath mockups — emotional nudge */}
+          <p
+            className={`mt-10 text-center text-sm italic text-warm-cream/25 ${
+              routinesRef.inView ? "animate-fade-up stagger-5" : "opacity-0"
+            }`}
+          >
+            &quot;It&apos;s not about being perfect. It&apos;s about showing up.&quot;
+          </p>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* SOCIAL PROOF — Stats bar                                   */}
+      {/* ═══════════════════════════════════════════════════════════ */}
       <section className="border-y border-white/[0.04] bg-near-black/50 py-8">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-8 px-5 text-center md:gap-16">
           <div>
@@ -450,7 +789,7 @@ export default function Home() {
               <AnimatedCounter target={2847} />+
             </p>
             <p className="mt-1 text-xs tracking-[0.1em] uppercase text-warm-cream/30">
-              Waitlist signups
+              On the waitlist
             </p>
           </div>
           <div className="hidden h-8 w-px bg-white/[0.06] md:block" />
@@ -459,7 +798,16 @@ export default function Home() {
               <AnimatedCounter target={14200} />+
             </p>
             <p className="mt-1 text-xs tracking-[0.1em] uppercase text-warm-cream/30">
-              Routines planned
+              Routines logged
+            </p>
+          </div>
+          <div className="hidden h-8 w-px bg-white/[0.06] md:block" />
+          <div>
+            <p className="font-[family-name:var(--font-playfair)] text-3xl italic text-gold">
+              <AnimatedCounter target={4300} />+
+            </p>
+            <p className="mt-1 text-xs tracking-[0.1em] uppercase text-warm-cream/30">
+              Products added
             </p>
           </div>
           <div className="hidden h-8 w-px bg-white/[0.06] md:block" />
@@ -474,101 +822,27 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── APP SHOWCASE — PHONE MOCKUPS ─── */}
-      <section className="py-20 md:py-28">
-        <div ref={routinesRef.ref} className="mx-auto max-w-6xl px-5">
-          <div className="mb-12 text-center">
-            <p className="mb-3 text-xs font-semibold tracking-[0.3em] uppercase text-gold">
-              Real routines, real products
-            </p>
-            <h2
-              className={`font-[family-name:var(--font-playfair)] text-3xl italic md:text-5xl ${
-                routinesRef.inView ? "animate-fade-up" : "opacity-0"
-              }`}
-            >
-              See what your routine <span className="text-gold">looks like</span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-lg text-sm text-warm-cream/40">
-              Step-by-step walkthroughs with real products. Track AM and PM
-              separately. Build streaks that prove your devotion.
-            </p>
-          </div>
-
-          {/* Scrollable phone mockups */}
-          <div className="scrollbar-hide -mx-5 flex gap-8 overflow-x-auto px-5 pb-4 md:justify-center md:overflow-x-visible">
-            {routines.map((r, i) => (
-              <PhoneMockup
-                key={i}
-                routine={r}
-                className={`${
-                  routinesRef.inView
-                    ? `animate-fade-up stagger-${i + 2}`
-                    : "opacity-0"
-                } ${i === 1 ? "animate-float" : ""}`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── FEATURES GRID ─── */}
-      <section className="border-y border-white/[0.04] bg-near-black/30 py-20 md:py-28">
-        <div ref={featuresRef.ref} className="mx-auto max-w-5xl px-5">
-          <div className="mb-12 text-center">
-            <p className="mb-3 text-xs font-semibold tracking-[0.3em] uppercase text-gold">
-              More than a tracker
-            </p>
-            <h2
-              className={`font-[family-name:var(--font-playfair)] text-3xl italic md:text-5xl ${
-                featuresRef.inView ? "animate-fade-up" : "opacity-0"
-              }`}
-            >
-              Everything your routine <span className="text-gold">deserves</span>
-            </h2>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((f, i) => (
-              <div
-                key={i}
-                className={`group rounded-2xl border border-white/[0.04] bg-near-black/60 p-7 transition-all hover:border-gold/20 hover:bg-near-black ${
-                  featuresRef.inView
-                    ? `animate-fade-up stagger-${i + 1}`
-                    : "opacity-0"
-                }`}
-              >
-                <div className="mb-3">
-                  <FeatureIcon name={f.icon} />
-                </div>
-                <h3 className="mb-1.5 text-base font-semibold text-warm-cream">
-                  {f.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-warm-cream/40">
-                  {f.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── SOCIAL / COMMUNITY ─── */}
-      <section className="py-20 md:py-28">
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* COMMUNITY — The social platform                            */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32">
         <div ref={socialRef.ref} className="mx-auto max-w-5xl px-5">
           <div className="mb-12 text-center">
             <p className="mb-3 text-xs font-semibold tracking-[0.3em] uppercase text-gold">
-              Beauty community
+              The community
             </p>
             <h2
               className={`font-[family-name:var(--font-playfair)] text-3xl italic md:text-5xl ${
                 socialRef.inView ? "animate-fade-up" : "opacity-0"
               }`}
             >
-              Letterboxd, but for <span className="text-gold">beauty</span>
+              Your shelf has a{" "}
+              <span className="text-gold">story</span>
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-sm text-warm-cream/40">
-              Share your routine. Discover what works for others. Build a beauty
-              identity that&apos;s authentically yours.
+              Every product you add builds a community database. Every routine
+              you share helps someone else find what works. This isn&apos;t content
+              creation — it&apos;s just being honest about what you use.
             </p>
           </div>
 
@@ -601,11 +875,73 @@ export default function Home() {
               timeAgo="8h ago"
             />
           </div>
+
+          {/* Community-built database callout */}
+          <div
+            className={`mt-10 rounded-2xl border border-gold/10 bg-gold/[0.03] p-8 text-center ${
+              socialRef.inView ? "animate-fade-up stagger-4" : "opacity-0"
+            }`}
+          >
+            <p className="mb-2 font-[family-name:var(--font-playfair)] text-xl italic text-warm-cream/80">
+              Every routine shared makes us all smarter.
+            </p>
+            <p className="text-sm text-warm-cream/35">
+              You add your products. We build the database. The community
+              discovers what actually works — for skin types like theirs, from
+              people like them.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* ─── THE SIN SYSTEM ─── */}
-      <section className="border-y border-white/[0.04] bg-dark-warm py-20 md:py-28">
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* FEATURES GRID                                              */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section className="border-y border-white/[0.04] bg-near-black/30 py-20 md:py-28">
+        <div ref={featuresRef.ref} className="mx-auto max-w-5xl px-5">
+          <div className="mb-12 text-center">
+            <p className="mb-3 text-xs font-semibold tracking-[0.3em] uppercase text-gold">
+              Built for ritual
+            </p>
+            <h2
+              className={`font-[family-name:var(--font-playfair)] text-3xl italic md:text-5xl ${
+                featuresRef.inView ? "animate-fade-up" : "opacity-0"
+              }`}
+            >
+              Everything your routine{" "}
+              <span className="text-gold">deserves</span>
+            </h2>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((f, i) => (
+              <div
+                key={i}
+                className={`group rounded-2xl border border-white/[0.04] bg-near-black/60 p-7 transition-all hover:border-gold/20 hover:bg-near-black ${
+                  featuresRef.inView
+                    ? `animate-fade-up stagger-${i + 1}`
+                    : "opacity-0"
+                }`}
+              >
+                <div className="mb-3">
+                  <FeatureIcon name={f.icon} />
+                </div>
+                <h3 className="mb-1.5 text-base font-semibold text-warm-cream">
+                  {f.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-warm-cream/40">
+                  {f.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* THE SIN SYSTEM                                             */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32">
         <div ref={sinsRef.ref} className="mx-auto max-w-5xl px-5">
           <div className="mb-12 text-center">
             <p className="mb-3 text-xs font-semibold tracking-[0.3em] uppercase text-gold">
@@ -620,8 +956,8 @@ export default function Home() {
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-sm text-warm-cream/40">
               Your beauty behavior mapped to the seven sins. Build your sin
-              level from Casual to Sinful. Wear your obsession like a badge
-              of honor.
+              level from Casual to Sinful. Wear your obsession like a badge of
+              honor.
             </p>
           </div>
 
@@ -635,7 +971,9 @@ export default function Home() {
                     : "opacity-0"
                 }`}
               >
-                <div className="mb-2 text-2xl">{sin.emoji}</div>
+                <div className="mb-2 flex items-center justify-center">
+                  <SinIcon name={sin.icon} />
+                </div>
                 <p className="font-[family-name:var(--font-playfair)] text-sm italic text-gold">
                   {sin.name}
                 </p>
@@ -668,8 +1006,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── WEEKLY SIN REPORT PREVIEW ─── */}
-      <section className="py-20 md:py-28">
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* WEEKLY SIN REPORT PREVIEW                                  */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section className="border-y border-white/[0.04] bg-dark-warm py-20 md:py-28">
         <div className="mx-auto max-w-5xl px-5">
           <div className="grid items-center gap-12 md:grid-cols-2">
             {/* Report mockup */}
@@ -701,7 +1041,9 @@ export default function Home() {
                       <p className="font-[family-name:var(--font-playfair)] text-lg italic text-warm-cream">
                         {s.val}
                       </p>
-                      <p className="text-[8px] text-warm-cream/30">{s.label}</p>
+                      <p className="text-[8px] text-warm-cream/30">
+                        {s.label}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -755,15 +1097,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── TESTIMONIALS / QUOTES ─── */}
-      <section className="border-y border-white/[0.04] bg-near-black/40 py-20 md:py-28">
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* TESTIMONIALS — Emotional proof                             */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section className="py-20 md:py-28">
         <div className="mx-auto max-w-5xl px-5">
           <div className="mb-12 text-center">
             <p className="mb-3 text-xs font-semibold tracking-[0.3em] uppercase text-gold">
               From our waitlist
             </p>
             <h2 className="font-[family-name:var(--font-playfair)] text-3xl italic md:text-5xl">
-              They said <span className="text-gold">&quot;finally&quot;</span>
+              They said{" "}
+              <span className="text-gold">&quot;finally&quot;</span>
             </h2>
           </div>
 
@@ -808,8 +1153,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── FINAL CTA ─── */}
-      <section id="waitlist" className="relative py-24 md:py-32">
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* FINAL CTA — Urgency + emotion                              */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <section
+        id="waitlist"
+        className="relative border-t border-white/[0.04] py-24 md:py-32"
+      >
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/[0.04] blur-[150px]" />
         </div>
@@ -818,26 +1168,39 @@ export default function Home() {
           ref={ctaRef.ref}
           className="relative z-10 mx-auto max-w-2xl px-5 text-center"
         >
-          <h2
-            className={`mb-4 font-[family-name:var(--font-playfair)] text-4xl italic md:text-6xl ${
+          {/* Urgency line */}
+          <div
+            className={`mb-8 inline-flex items-center gap-2 rounded-full border border-gold/20 bg-gold/[0.05] px-4 py-1.5 ${
               ctaRef.inView ? "animate-fade-up" : "opacity-0"
             }`}
           >
-            Your routine <span className="text-gold">starts here.</span>
-          </h2>
-          <p
-            className={`mx-auto mb-8 max-w-md text-sm text-warm-cream/40 ${
+            <div className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
+            <span className="text-xs text-gold/80">
+              <AnimatedCounter target={2847} /> people ahead of you
+            </span>
+          </div>
+
+          <h2
+            className={`mb-4 font-[family-name:var(--font-playfair)] text-4xl italic md:text-6xl ${
               ctaRef.inView ? "animate-fade-up stagger-1" : "opacity-0"
             }`}
           >
-            Join thousands of beauty lovers building their perfect routine. Be
-            the first to get access when we launch.
+            Your routine is{" "}
+            <span className="text-gold">worth remembering.</span>
+          </h2>
+          <p
+            className={`mx-auto mb-8 max-w-md text-sm text-warm-cream/40 ${
+              ctaRef.inView ? "animate-fade-up stagger-2" : "opacity-0"
+            }`}
+          >
+            Every ritual you&apos;ve built. Every product you swear by. Every
+            step you never skip. It all deserves a home.
           </p>
 
           <form
             onSubmit={handleSubmit}
             className={`mx-auto flex max-w-md flex-col gap-3 sm:flex-row ${
-              ctaRef.inView ? "animate-fade-up stagger-2" : "opacity-0"
+              ctaRef.inView ? "animate-fade-up stagger-3" : "opacity-0"
             }`}
           >
             {!submitted ? (
