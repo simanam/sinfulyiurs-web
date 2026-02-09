@@ -889,11 +889,28 @@ export default function Home() {
   const sinsRef = useInView();
   const ctaRef = useInView();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
+    if (!email.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (res.ok) {
+        setSubmitted(true);
+        setEmail("");
+      }
+    } catch {
+      // silently fail — still show success to not block UX
       setSubmitted(true);
       setEmail("");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -1005,9 +1022,10 @@ export default function Home() {
                   />
                   <button
                     type="submit"
-                    className="animate-pulse-gold shrink-0 whitespace-nowrap rounded-xl bg-gold px-8 py-3.5 text-sm font-semibold text-obsidian transition-all hover:bg-gold-light"
+                    disabled={submitting}
+                    className="animate-pulse-gold shrink-0 whitespace-nowrap rounded-xl bg-gold px-8 py-3.5 text-sm font-semibold text-obsidian transition-all hover:bg-gold-light disabled:opacity-60"
                   >
-                    Get early access
+                    {submitting ? "Joining..." : "Get early access"}
                   </button>
                 </>
               ) : (
@@ -1649,9 +1667,10 @@ export default function Home() {
                 />
                 <button
                   type="submit"
-                  className="animate-pulse-gold shrink-0 whitespace-nowrap rounded-xl bg-gold px-8 py-3.5 text-sm font-semibold text-obsidian transition-all hover:bg-gold-light"
+                  disabled={submitting}
+                  className="animate-pulse-gold shrink-0 whitespace-nowrap rounded-xl bg-gold px-8 py-3.5 text-sm font-semibold text-obsidian transition-all hover:bg-gold-light disabled:opacity-60"
                 >
-                  Get early access
+                  {submitting ? "Joining..." : "Get early access"}
                 </button>
               </>
             ) : (
