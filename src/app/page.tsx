@@ -445,6 +445,431 @@ function FeedCard({
   );
 }
 
+/* ─── Animated phone demo for hero ─── */
+const heroSteps = [
+  { product: "Banila Co Clean It Zero", freq: "Daily", img: "/products/BANILLACOCLEAN.WEBP" },
+  { product: "La Roche-Posay Cleanser", freq: "Daily", img: "/products/LaRochePosayCleanser.JPG" },
+  { product: "COSRX Snail Mucin Essence", freq: "Daily", img: "/products/COSRXSnailEsssence.WEBP" },
+  { product: "The Ordinary Niacinamide", freq: "Daily", img: "/products/OrdinaryNiacimindeSerum.WEBP" },
+  { product: "Laneige Sleeping Mask", freq: "Tue/Thu/Sat", img: "/products/Laniegelipsleepingmask.WEBP" },
+];
+
+type DemoPhase = "checking" | "celebration" | "share" | "feed" | "resetting";
+
+function AnimatedPhoneDemo() {
+  const [phase, setPhase] = useState<DemoPhase>("checking");
+  const [stepIndex, setStepIndex] = useState(-1);
+  const [checked, setChecked] = useState<boolean[]>(new Array(heroSteps.length).fill(false));
+  const [animatingStep, setAnimatingStep] = useState(-1);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+
+    if (phase === "checking") {
+      const nextStep = stepIndex + 1;
+      if (nextStep < heroSteps.length) {
+        timer = setTimeout(() => {
+          setAnimatingStep(nextStep);
+          setChecked((prev) => {
+            const next = [...prev];
+            next[nextStep] = true;
+            return next;
+          });
+          setStepIndex(nextStep);
+        }, nextStep === 0 ? 1200 : 800);
+      } else {
+        timer = setTimeout(() => setPhase("celebration"), 600);
+      }
+    } else if (phase === "celebration") {
+      timer = setTimeout(() => setPhase("share"), 2200);
+    } else if (phase === "share") {
+      timer = setTimeout(() => setPhase("feed"), 3000);
+    } else if (phase === "feed") {
+      timer = setTimeout(() => setPhase("resetting"), 4000);
+    } else if (phase === "resetting") {
+      timer = setTimeout(() => {
+        setPhase("checking");
+        setStepIndex(-1);
+        setChecked(new Array(heroSteps.length).fill(false));
+        setAnimatingStep(-1);
+      }, 500);
+    }
+
+    return () => clearTimeout(timer);
+  }, [phase, stepIndex]);
+
+  return (
+    <div className="relative w-[300px] md:w-[330px] lg:w-[340px]">
+      {/* Ambient glow behind phone */}
+      <div className="pointer-events-none absolute -inset-10 rounded-full bg-gold/[0.07] blur-[80px]" />
+
+      {/* Phone frame — iPhone 14 Pro proportions */}
+      <div className="relative bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] rounded-[3.5rem] p-[3px] shadow-2xl">
+        {/* Screen */}
+        <div
+          className="relative bg-near-black rounded-[3.2rem] overflow-hidden"
+          style={{ aspectRatio: "9 / 19.5" }}
+        >
+          {/* Dynamic Island */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-7 bg-obsidian rounded-full z-10" />
+
+          {/* Screen content — positioned below dynamic island */}
+          <div className="absolute inset-0 top-14 px-5 pb-8 flex flex-col">
+            {/* ── Phase: Checking steps ── */}
+            {(phase === "checking" || phase === "resetting") && (
+              <div className={`flex flex-col flex-1 ${phase === "resetting" ? "opacity-40 transition-opacity duration-300" : ""}`}>
+                {/* Status bar */}
+                <div className="mb-2 flex items-center justify-between text-[10px] text-warm-cream/40">
+                  <span>9:41</span>
+                  <span>🌙 PM</span>
+                </div>
+
+                {/* Header */}
+                <div className="mb-3 text-center">
+                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-gold-muted">
+                    Evening
+                  </p>
+                  <h4 className="font-[family-name:var(--font-playfair)] text-lg italic text-warm-cream">
+                    The Glass Skin PM
+                  </h4>
+                </div>
+
+                {/* Steps */}
+                <div className="flex-1">
+                  {heroSteps.map((step, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 border-b border-white/[0.04] py-2.5"
+                    >
+                      {/* Animated checkbox — product image → checkmark */}
+                      <div className="relative">
+                        <div
+                          className={`flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-all duration-300 overflow-hidden ${
+                            checked[i]
+                              ? "bg-sage text-obsidian"
+                              : "border border-warm-cream/10"
+                          }`}
+                        >
+                          {checked[i] ? (
+                            <span className={animatingStep === i ? "animate-check-fill" : ""}>
+                              ✓
+                            </span>
+                          ) : (
+                            <img
+                              src={step.img}
+                              alt={step.product}
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                        </div>
+                        {animatingStep === i && (
+                          <div className="absolute inset-0 rounded-full bg-sage/40 animate-pulse-ring" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`truncate text-[11px] transition-all duration-300 ${
+                            checked[i] ? "text-warm-cream/40 line-through" : "text-warm-cream/70"
+                          }`}
+                        >
+                          {step.product}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-sm px-1.5 py-0.5 text-[8px] font-semibold ${
+                          step.freq === "Daily"
+                            ? "bg-gold/15 text-gold"
+                            : "bg-blush/20 text-blush"
+                        }`}
+                      >
+                        {step.freq}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Streak */}
+                <div className="mt-4 text-center">
+                  <span className="text-[10px] font-semibold tracking-[0.12em] text-gold">
+                    🔥 STREAK: 47 DAYS
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full rounded-full bg-sage transition-all duration-500 ease-out"
+                    style={{
+                      width: `${((stepIndex + 1) / heroSteps.length) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="mt-2 text-center text-[9px] text-warm-cream/25">
+                  {Math.max(0, stepIndex + 1)}/{heroSteps.length} steps
+                </p>
+
+                {/* User info */}
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full">
+                    <img src="/models/simsi2.PNG" alt="Simi" className="h-full w-full object-cover" />
+                  </div>
+                  <span className="text-[9px] text-warm-cream/40">
+                    Simi · Sin Level: Devoted
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* ── Phase: Celebration — sharable routine card ── */}
+            {phase === "celebration" && (
+              <div className="animate-crossfade-in flex flex-1 flex-col items-center justify-center px-1">
+                {/* Sharable routine card */}
+                <div className="animate-scale-in w-full rounded-2xl border border-white/[0.06] bg-gradient-to-br from-charcoal to-near-black p-4 shadow-lg">
+                  {/* Card header */}
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full">
+                        <img src="/models/simsi2.PNG" alt="Simi" className="h-full w-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold text-warm-cream">Simi</p>
+                        <p className="text-[8px] text-warm-cream/30">@simiskin</p>
+                      </div>
+                    </div>
+                    <div className="rounded-full bg-gold/15 px-2.5 py-1">
+                      <p className="text-[8px] font-semibold text-gold">Devoted</p>
+                    </div>
+                  </div>
+
+                  {/* Routine title */}
+                  <div className="mb-2.5 text-center">
+                    <p className="text-[8px] tracking-[0.15em] uppercase text-gold-muted">Evening Ritual</p>
+                    <h4 className="font-[family-name:var(--font-playfair)] text-sm italic text-warm-cream">
+                      The Glass Skin PM
+                    </h4>
+                  </div>
+
+                  {/* Product list on card */}
+                  <div className="mb-3 space-y-1">
+                    {heroSteps.map((step, i) => (
+                      <div key={i} className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-2.5 py-1.5">
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full overflow-hidden">
+                          <img src={step.img} alt={step.product} className="h-full w-full object-cover" />
+                        </div>
+                        <span className="flex-1 truncate text-[9px] text-warm-cream/60">{step.product}</span>
+                        <span className={`text-[7px] font-semibold ${step.freq === "Daily" ? "text-gold/60" : "text-blush/60"}`}>
+                          {step.freq}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Card footer — streak + stats */}
+                  <div className="flex items-center justify-between border-t border-white/[0.06] pt-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px]">🔥</span>
+                      <span className="text-[9px] font-semibold text-sage">48 days</span>
+                    </div>
+                    <span className="text-[9px] text-warm-cream/30">5/5 complete</span>
+                    <span className="text-[8px] font-medium tracking-wider text-gold-muted">sinfulyurs</span>
+                  </div>
+                </div>
+
+                {/* Share button */}
+                <div className="animate-fade-in stagger-3 mt-4">
+                  <span className="inline-block rounded-full bg-gold px-7 py-2.5 text-[12px] font-semibold text-obsidian animate-pulse-gold">
+                    Share Your Ritual
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* ── Phase: Share sheet over routine card ── */}
+            {phase === "share" && (
+              <div className="relative flex flex-1 flex-col">
+                {/* Dimmed routine card behind */}
+                <div className="flex flex-1 flex-col items-center justify-center px-1 opacity-25">
+                  <div className="w-full rounded-2xl border border-white/[0.06] bg-gradient-to-br from-charcoal to-near-black p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full">
+                        <img src="/models/simsi2.PNG" alt="Simi" className="h-full w-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold text-warm-cream">Simi</p>
+                        <p className="text-[8px] text-warm-cream/30">@simiskin</p>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <h4 className="font-[family-name:var(--font-playfair)] text-sm italic text-warm-cream">The Glass Skin PM</h4>
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      {heroSteps.slice(0, 3).map((step, i) => (
+                        <div key={i} className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-2.5 py-1.5">
+                          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full overflow-hidden">
+                            <img src={step.img} alt={step.product} className="h-full w-full object-cover" />
+                          </div>
+                          <span className="text-[9px] text-warm-cream/60">{step.product}</span>
+                        </div>
+                      ))}
+                      <p className="text-center text-[8px] text-warm-cream/20">+2 more</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Share sheet overlay */}
+                <div className="absolute inset-x-0 bottom-0 animate-slide-up">
+                  <div className="rounded-t-[20px] border-t border-white/[0.08] bg-charcoal/95 backdrop-blur-md p-5 pb-6">
+                    <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-warm-cream/20" />
+
+                    <p className="mb-4 text-center text-xs font-semibold text-warm-cream/60">
+                      Share your ritual
+                    </p>
+
+                    <div className="mb-4 grid grid-cols-4 gap-3">
+                      {[
+                        { name: "Instagram", src: "/icons/icons8-instagram-logo-48.svg", invert: false },
+                        { name: "Stories", src: "/icons/icons8-instagram-logo-48.svg", invert: false },
+                        { name: "Messages", src: "/icons/icons8-imessage-48.svg", invert: false },
+                        { name: "TikTok", src: "/icons/icons8-tiktok-50.svg", invert: true },
+                      ].map((app) => (
+                        <div key={app.name} className="flex flex-col items-center gap-1.5">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-near-black shadow-lg overflow-hidden">
+                            <img
+                              src={app.src}
+                              alt={app.name}
+                              className="h-10 w-10"
+                              style={app.invert ? { filter: "brightness(0) invert(1)" } : undefined}
+                            />
+                          </div>
+                          <span className="text-[8px] text-warm-cream/40">
+                            {app.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {["Copy Link", "Save Image"].map((opt) => (
+                        <div
+                          key={opt}
+                          className="flex items-center gap-2.5 rounded-xl bg-near-black/60 px-3.5 py-2.5"
+                        >
+                          <span className="text-sm">
+                            {opt === "Copy Link" ? "🔗" : "💾"}
+                          </span>
+                          <span className="text-[11px] text-warm-cream/50">
+                            {opt}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Phase: Social feed ── */}
+            {phase === "feed" && (
+              <div className="animate-crossfade-in flex flex-1 flex-col">
+                {/* Feed header */}
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="font-[family-name:var(--font-playfair)] text-base italic text-warm-cream">
+                    Feed
+                  </h4>
+                  <div className="flex gap-2">
+                    <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[8px] font-semibold text-gold">Following</span>
+                    <span className="rounded-full bg-white/[0.04] px-2.5 py-1 text-[8px] text-warm-cream/30">Discover</span>
+                  </div>
+                </div>
+
+                {/* Feed post 1 — Shared routine (Simi's post appearing in feed) */}
+                <div className="animate-fade-in mb-2.5 rounded-xl border border-white/[0.05] bg-charcoal/40 p-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full">
+                      <img src="/models/simsi.jpeg" alt="Simi" className="h-full w-full object-cover" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[10px] font-semibold text-warm-cream">Simi</p>
+                      <p className="text-[7px] text-warm-cream/25">just now</p>
+                    </div>
+                    <span className="rounded bg-sage/15 px-1.5 py-0.5 text-[7px] font-semibold text-sage">48 day streak</span>
+                  </div>
+                  <p className="mb-2 text-[10px] text-warm-cream/60">Completed my Glass Skin PM ritual tonight ✨</p>
+                  {/* Mini routine preview */}
+                  <div className="mb-2 flex gap-1.5">
+                    {heroSteps.slice(0, 4).map((step, i) => (
+                      <div key={i} className="h-7 w-7 shrink-0 overflow-hidden rounded-full border border-white/[0.06]">
+                        <img src={step.img} alt={step.product} className="h-full w-full object-cover" />
+                      </div>
+                    ))}
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.04] text-[8px] text-warm-cream/30">+1</div>
+                  </div>
+                  <div className="flex items-center gap-3 text-[9px] text-warm-cream/30">
+                    <span>♡ 24</span>
+                    <span>💬 3</span>
+                    <span className="ml-auto text-[8px] text-gold/50">Clone routine</span>
+                  </div>
+                </div>
+
+                {/* Feed post 2 — Product review/rating */}
+                <div className="animate-fade-in stagger-2 mb-2.5 rounded-xl border border-white/[0.05] bg-charcoal/40 p-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gold/30 text-[8px] font-bold text-obsidian">J</div>
+                    <div className="flex-1">
+                      <p className="text-[10px] font-semibold text-warm-cream">Jess</p>
+                      <p className="text-[7px] text-warm-cream/25">2h ago</p>
+                    </div>
+                  </div>
+                  <p className="mb-1.5 text-[10px] text-warm-cream/60">
+                    Finally found my holy grail serum
+                  </p>
+                  {/* Tagged product with rating */}
+                  <div className="mb-2 flex items-center gap-2 rounded-lg bg-white/[0.03] px-2.5 py-2">
+                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-white/[0.06]">
+                      <img src="/products/OrdinaryNiacimindeSerum.WEBP" alt="Niacinamide" className="h-full w-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate text-[9px] font-medium text-warm-cream/70">The Ordinary Niacinamide</p>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-gold">★★★★★</span>
+                        <span className="text-[7px] text-warm-cream/25">5.0</span>
+                      </div>
+                    </div>
+                    <span className="shrink-0 rounded bg-gold/10 px-1.5 py-0.5 text-[7px] font-semibold text-gold">Tagged</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[9px] text-warm-cream/30">
+                    <span>♡ 89</span>
+                    <span>💬 12</span>
+                    <span>📎 Save</span>
+                  </div>
+                </div>
+
+                {/* Feed post 3 — Quick shared routine card (peek) */}
+                <div className="animate-fade-in stagger-3 rounded-xl border border-white/[0.05] bg-charcoal/40 p-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sage/40 text-[8px] font-bold text-obsidian">R</div>
+                    <div className="flex-1">
+                      <p className="text-[10px] font-semibold text-warm-cream">Riya</p>
+                      <p className="text-[7px] text-warm-cream/25">5h ago</p>
+                    </div>
+                    <span className="rounded bg-blush/15 px-1.5 py-0.5 text-[7px] font-semibold text-blush">Sinful</span>
+                  </div>
+                  <p className="text-[10px] text-warm-cream/60">My 12-step AM routine is unhinged and I love it 💀</p>
+                  <div className="mt-1.5 flex items-center gap-3 text-[9px] text-warm-cream/30">
+                    <span>♡ 142</span>
+                    <span>💬 31</span>
+                    <span className="ml-auto text-[8px] text-gold/50">Clone routine</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════ */
 /* MAIN PAGE                                                   */
 /* ═══════════════════════════════════════════════════════════ */
@@ -493,115 +918,124 @@ export default function Home() {
       </nav>
 
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/* HERO — Emotional, identity-driven                          */}
+      {/* HERO — Split layout: text left, animated phone right       */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-5 pt-14">
+      <section className="relative flex min-h-screen items-center overflow-hidden px-5 pt-20 pb-12">
         {/* Ambient gradients */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-[20%] top-[15%] h-[500px] w-[500px] rounded-full bg-gold/[0.06] blur-[120px]" />
+          <div className="absolute left-[10%] top-[15%] h-[500px] w-[500px] rounded-full bg-gold/[0.06] blur-[120px]" />
           <div className="absolute bottom-[20%] right-[15%] h-[400px] w-[400px] rounded-full bg-blush/[0.04] blur-[100px]" />
         </div>
 
         <div
           ref={heroRef.ref}
-          className="relative z-10 mx-auto max-w-3xl text-center"
+          className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-[1fr_auto] md:gap-16"
         >
-          {/* Eyebrow — sets context */}
-          <p
-            className={`mb-4 text-xs font-medium tracking-[0.3em] uppercase text-gold-muted ${
-              isMounted ? "animate-fade-up" : "opacity-0"
-            }`}
-          >
-            Where your beauty routine lives
-          </p>
+          {/* Left column — text content */}
+          <div className="order-1 text-center md:text-left">
+            <p
+              className={`mb-4 text-xs font-medium tracking-[0.3em] uppercase text-gold-muted ${
+                isMounted ? "animate-fade-up" : "opacity-0"
+              }`}
+            >
+              Where your beauty routine lives
+            </p>
 
-          {/* Main headline — emotional, not functional */}
-          <h1
-            className={`mb-6 font-[family-name:var(--font-playfair)] text-[clamp(2.5rem,8vw,5.5rem)] font-normal leading-[1.05] italic ${
-              isMounted ? "animate-fade-up stagger-1" : "opacity-0"
-            }`}
-          >
-            Log it.{" "}
-            <span className="text-gold">Share it.</span>
-            <br />
-            <span className="text-warm-cream/40">Own it.</span>
-          </h1>
+            <h1
+              className={`mb-6 font-[family-name:var(--font-playfair)] text-[clamp(2.2rem,6vw,4.5rem)] font-normal leading-[1.08] italic ${
+                isMounted ? "animate-fade-up stagger-1" : "opacity-0"
+              }`}
+            >
+              Log it.{" "}
+              <span className="text-gold">Share it.</span>
+              <br />
+              <span className="text-warm-cream/40">Own it.</span>
+            </h1>
 
-          {/* Subhead — the hook */}
-          <p
-            className={`mx-auto mb-5 max-w-xl text-base font-light leading-relaxed text-warm-cream/50 md:text-lg ${
-              isMounted ? "animate-fade-up stagger-2" : "opacity-0"
-            }`}
-          >
-            The place where skincare people log their rituals, share what they
-            actually use, and discover routines from real people — not
-            influencers.
-          </p>
+            <p
+              className={`mb-5 max-w-lg text-base font-light leading-relaxed text-warm-cream/50 md:text-lg ${
+                isMounted ? "animate-fade-up stagger-2" : "opacity-0"
+              }`}
+            >
+              The place where skincare people log their rituals, share what they
+              actually use, and discover routines from real people — not
+              influencers.
+            </p>
 
-          {/* Typewriter — shows the social diversity */}
-          <div
-            className={`mb-10 h-8 ${
-              isMounted ? "animate-fade-up stagger-2" : "opacity-0"
-            }`}
-          >
-            <p className="text-sm text-warm-cream/30">
-              Right now, someone is{" "}
-              {isMounted && (
-                <TypewriterText
-                  texts={[
-                    "logging their 7-step PM ritual",
-                    "sharing a retinol routine that actually works",
-                    "cloning a routine they found at 2am",
-                    "hitting a 60-day streak",
-                    "adding a new holy grail product",
-                    "discovering their next obsession",
-                  ]}
-                  className="text-warm-cream/60"
-                />
+            {/* Typewriter */}
+            <div
+              className={`mb-8 h-8 ${
+                isMounted ? "animate-fade-up stagger-2" : "opacity-0"
+              }`}
+            >
+              <p className="text-sm text-warm-cream/30">
+                Right now, someone is{" "}
+                {isMounted && (
+                  <TypewriterText
+                    texts={[
+                      "logging their 7-step PM ritual",
+                      "sharing a retinol routine that actually works",
+                      "cloning a routine they found at 2am",
+                      "hitting a 60-day streak",
+                      "adding a new holy grail product",
+                      "discovering their next obsession",
+                    ]}
+                    className="text-warm-cream/60"
+                  />
+                )}
+              </p>
+            </div>
+
+            {/* Email signup */}
+            <form
+              onSubmit={handleSubmit}
+              className={`flex max-w-md flex-col gap-3 sm:flex-row ${
+                isMounted ? "animate-fade-up stagger-3" : "opacity-0"
+              } mx-auto md:mx-0`}
+            >
+              {!submitted ? (
+                <>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Your email"
+                    required
+                    className="w-full min-w-0 flex-1 rounded-xl border border-white/[0.08] bg-charcoal px-5 py-3.5 text-sm text-warm-cream placeholder:text-warm-cream/30 outline-none transition-all focus:border-gold/50 sm:min-w-[240px]"
+                  />
+                  <button
+                    type="submit"
+                    className="animate-pulse-gold shrink-0 whitespace-nowrap rounded-xl bg-gold px-8 py-3.5 text-sm font-semibold text-obsidian transition-all hover:bg-gold-light"
+                  >
+                    Get early access
+                  </button>
+                </>
+              ) : (
+                <div className="animate-fade-up w-full rounded-xl border border-sage/30 bg-sage/10 px-6 py-4 text-center">
+                  <p className="text-sm font-medium text-sage">
+                    You&apos;re in. We&apos;ll be in touch.
+                  </p>
+                </div>
               )}
+            </form>
+
+            <p
+              className={`mt-4 text-[11px] text-warm-cream/25 ${
+                isMounted ? "animate-fade-up stagger-4" : "opacity-0"
+              } md:text-left text-center`}
+            >
+              iOS app launching soon · Free to use · No algorithm, no ads
             </p>
           </div>
 
-          {/* Email signup */}
-          <form
-            onSubmit={handleSubmit}
-            className={`mx-auto flex max-w-md flex-col gap-3 sm:flex-row ${
-              isMounted ? "animate-fade-up stagger-3" : "opacity-0"
+          {/* Right column — animated phone demo */}
+          <div
+            className={`order-2 flex justify-center ${
+              isMounted ? "animate-fade-up stagger-2" : "opacity-0"
             }`}
           >
-            {!submitted ? (
-              <>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Your email"
-                  required
-                  className="w-full min-w-0 flex-1 rounded-xl border border-white/[0.08] bg-charcoal px-5 py-3.5 text-sm text-warm-cream placeholder:text-warm-cream/30 outline-none transition-all focus:border-gold/50 sm:min-w-[240px]"
-                />
-                <button
-                  type="submit"
-                  className="animate-pulse-gold shrink-0 whitespace-nowrap rounded-xl bg-gold px-8 py-3.5 text-sm font-semibold text-obsidian transition-all hover:bg-gold-light"
-                >
-                  Get early access
-                </button>
-              </>
-            ) : (
-              <div className="animate-fade-up w-full rounded-xl border border-sage/30 bg-sage/10 px-6 py-4 text-center">
-                <p className="text-sm font-medium text-sage">
-                  You&apos;re in. We&apos;ll be in touch.
-                </p>
-              </div>
-            )}
-          </form>
-
-          <p
-            className={`mt-4 text-[11px] text-warm-cream/25 ${
-              isMounted ? "animate-fade-up stagger-4" : "opacity-0"
-            }`}
-          >
-            iOS app launching soon · Free to use · No algorithm, no ads
-          </p>
+            <AnimatedPhoneDemo />
+          </div>
         </div>
 
         {/* Scroll indicator */}
